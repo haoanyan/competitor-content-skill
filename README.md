@@ -48,7 +48,10 @@ Competitor-Skill/
 
 ### 1. 安装 opencode
 
-参考 [opencode.ai](https://opencode.ai) 安装 opencode CLI。
+两种方式任选其一：
+
+- **VS Code 插件**：在 VS Code 扩展市场搜索 "opencode" 安装插件，直接在编辑器内使用。
+- **CLI 命令行**：参考 [opencode.ai](https://opencode.ai) 安装 opencode CLI。
 
 ### 2. 安装本 Skill
 
@@ -109,35 +112,6 @@ opencode agent 会自动执行 5 步流程：
 | `report.html` | 最终 HTML 报告，浏览器直接打开，文案可直接复制 |
 
 > 运行过程中临时生成 `analysis.json` 和 `extra.json`，报告生成后自动清理。
-
-## 参数速查
-
-```bash
-# 爬虫
-python crawler.py \
-  --games "自身游戏名:self,竞品1:comp:备用词1,竞品2:comp" \
-  --output "output/raw_data.json" \
-  --platform both --days 30 --max 30 \
-  --exclude "Windows,卸载,Xbox"
-
-# 分析器
-python analyzer.py --input "output/raw_data.json" --output "output/analysis.json"
-
-# 报告生成器
-python reportgen.py \
-  --analysis "output/analysis.json" \
-  --raw "output/raw_data.json" \
-  --output "output/report.html" \
-  --extra "output/extra.json"
-```
-
-| 参数 | 说明 |
-|------|------|
-| `--games` | 逗号分隔，格式 `游戏名:角色[:备用关键词]`，`self`=自身，`comp`=竞品 |
-| `--platform` | `both`(默认) / `bili` / `xhs` |
-| `--days` | 时间过滤天数（默认 30） |
-| `--max` | 每游戏每平台最大条数（默认 30） |
-| `--exclude` | 排除词，逗号分隔，命中则丢弃 |
 
 ## 注意事项
 
