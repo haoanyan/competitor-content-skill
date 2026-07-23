@@ -30,7 +30,7 @@ import os
 import sys
 import io
 import html as html_module
-from datetime import datetime
+from datetime import datetime, timedelta
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
@@ -76,6 +76,26 @@ def days_ago(pub_time, now=None):
         return f"{d}天前"
     except Exception:
         return "?"
+
+
+def any_post_exceeds_days(posts, days, now=None):
+    """检查列表中是否存在超过 days 天的历史内容"""
+    if not posts or days is None:
+        return False
+    if now is None:
+        now = datetime.now()
+    threshold = now - timedelta(days=days)
+    for p in posts:
+        pt = p.get("publish_time", "")
+        if not pt:
+            continue
+        try:
+            dt = datetime.strptime(pt, "%Y-%m-%d")
+            if dt < threshold:
+                return True
+        except Exception:
+            continue
+    return False
 
 
 def game_color_map(game_names):
@@ -197,7 +217,7 @@ def build_type_chart(type_counts, total):
     return html
 
 
-def build_top_table(posts, platform, is_self, game_colors, raw_data, now):
+def build_top_table(posts, platform, is_self, game_colors, raw_data, now, days=30):
     if not posts:
         return "<p style='color:#999;'>无数据</p>"
 
@@ -248,6 +268,9 @@ def build_top_table(posts, platform, is_self, game_colors, raw_data, now):
         html += f'<tr class="{row_class}"><td class="rank {rank_class}">{i+1}</td><td>{esc(title)}</td><td><span class="game-tag" style="background:{color};">{esc(game_name)}</span></td><td><span class="type-tag" style="background:{type_color};">{esc(ctype)}</span></td><td class="time-cell">{esc(pub_time)}</td><td class="time-cell">{da}</td><td>{metric1}</td><td>{metric2}</td><td class="score">{score:,}</td><td><a href="{esc(link)}" target="_blank" style="font-size:12px;color:#3498db;">{link_text}</a></td></tr>'
 
     html += '</table>'
+    if any_post_exceeds_days(posts, days, now):
+        notice = f'<div style="font-size:12px;color:#e67e22;margin-top:4px;"><strong>数据提示：</strong>本表包含 {days} 天外的历史内容，因近期可匹配内容不足已触发降级保留全部数据。</div>'
+        html = notice + html
     return html
 
 
@@ -272,7 +295,7 @@ def build_copy_card(copy, index):
 # ============================================================
 # 主生成流程
 # ============================================================
-def generate_report(analysis, raw_data, extra=None):
+def generate_report(analysis, raw_data, extra=None, days=30):
     now = datetime.now()
     report_date = analysis.get("report_date", now.strftime("%Y-%m-%d"))
     extra = extra or {}
@@ -339,9 +362,9 @@ def generate_report(analysis, raw_data, extra=None):
 
     # Section 4: Top10
     parts.append('<div class="section"><div class="section-title"><span class="icon">4</span> 竞品高互动内容 Top10</div><div class="table-header-row"><span class="platform-icon" style="background:#FB7299;">B站</span><h4>竞品 B站 高互动 Top10</h4></div>')
-    parts.append(build_top_table(analysis.get("bili_competitor_top10", []), "bili", False, game_colors, raw_data, now))
+    parts.append(build_top_table(analysis.get("bili_competitor_top10", []), "bili", False, game_colors, raw_data, now, days))
     parts.append('<div style="margin-top:24px;" class="table-header-row"><span class="platform-icon" style="background:#FF2442;">小红书</span><h4>竞品 小红书 高互动 Top10</h4></div>')
-    parts.append(build_top_table(analysis.get("xhs_competitor_top10", []), "xhs", False, game_colors, raw_data, now))
+    parts.append(build_top_table(analysis.get("xhs_competitor_top10", []), "xhs", False, game_colors, raw_data, now, days))
     # Self top5
     self_bili = analysis.get("bili_self_top5", [])
     self_xhs = analysis.get("xhs_self_top5", [])
@@ -349,10 +372,10 @@ def generate_report(analysis, raw_data, extra=None):
         parts.append(f'<div style="margin-top:24px;" class="table-header-row"><span class="platform-icon" style="background:#6c5ce7;">自身参照</span><h4>{esc(self_game_name)} 自身高互动 Top5（参照）</h4></div><div style="font-size:13px;color:#636e72;margin-bottom:8px;">以下为自身游戏数据，仅作参照对比，非分析重点。</div>')
         if self_bili:
             parts.append('<div style="font-size:13px;font-weight:600;color:#FB7299;margin:10px 0 5px;">B站 Top5</div>')
-            parts.append(build_top_table(self_bili, "bili", True, game_colors, raw_data, now))
+            parts.append(build_top_table(self_bili, "bili", True, game_colors, raw_data, now, days))
         if self_xhs:
             parts.append('<div style="font-size:13px;font-weight:600;color:#FF2442;margin:12px 0 5px;">小红书 Top5</div>')
-            parts.append(build_top_table(self_xhs, "xhs", True, game_colors, raw_data, now))
+            parts.append(build_top_table(self_xhs, "xhs", True, game_colors, raw_data, now, days))
     parts.append('</div>')
 
     # Section 5: Insights（可选）
@@ -399,6 +422,7 @@ def main():
     parser.add_argument("--analysis", required=True, help="analysis.json 路径")
     parser.add_argument("--raw", required=True, help="raw_data.json 路径")
     parser.add_argument("--output", required=True, help="report.html 输出路径")
+    parser.add_argument("--days", type=int, default=30, help="时间窗口天数（默认30）")
     parser.add_argument("--extra", help="extra.json 路径（游戏特有信息，可选）")
     args = parser.parse_args()
 
@@ -411,7 +435,7 @@ def main():
         with open(args.extra, "r", encoding="utf-8") as f:
             extra = json.load(f)
 
-    html_content = generate_report(analysis, raw_data, extra)
+    html_content = generate_report(analysis, raw_data, extra, args.days)
 
     with open(args.output, "w", encoding="utf-8") as f:
         f.write(html_content)
