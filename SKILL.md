@@ -1,5 +1,6 @@
 ---
 name: competitor-content
+version: 1.0.0
 description: Steam独立游戏竞品社区内容分析与文案生成（B站+小红书双平台）。用户提供自身游戏名和竞品列表后，自动抓取双平台社区内容，分析竞品热点与内容类型分布，生成3条文案，产出单一HTML报告。Trigger: 竞品分析, 社区内容抓取, 文案生成, indie game competitor analysis.
 ---
 

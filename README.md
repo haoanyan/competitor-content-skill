@@ -1,5 +1,7 @@
 # Competitor Content Skill
 
+![version](https://img.shields.io/badge/version-1.0.0-blue)
+
 Steam 独立游戏竞品社区内容分析与文案生成技能。输入一款游戏名 + 竞品列表，自动抓取 B站和小红书社区内容，分析竞品热点，模仿高互动帖子的写法生成 3 条社媒文案，产出一页 HTML 报告。
 
 ---
