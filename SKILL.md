@@ -1,6 +1,5 @@
 ---
 name: competitor-content
-version: 1.0.0
 description: Steam独立游戏竞品社区内容分析与文案生成（B站+小红书双平台）。用户提供自身游戏名和竞品列表后，自动抓取双平台社区内容，分析竞品热点与内容类型分布，生成3条文案，产出单一HTML报告。Trigger: 竞品分析, 社区内容抓取, 文案生成, indie game competitor analysis.
 ---
 
@@ -160,10 +159,13 @@ python reportgen.py \
   --analysis "output/{游戏名}_{日期}/analysis.json" \
   --raw "output/{游戏名}_{日期}/raw_data.json" \
   --output "output/{游戏名}_{日期}/report.html" \
-  --extra "output/{游戏名}_{日期}/extra.json"
+  --extra "output/{游戏名}_{日期}/extra.json" \
+  --days 30
 ```
 
-reportgen.py：内嵌CSS单一HTML文件，7区块（报告头→竞品识别→词云→类型分布→Top10→insights→产品分析→文案），丰富配色，tag自适应不截断。`extra.json` 缺省时对应区块自动跳过。
+`--days` 为可选参数，默认 30 天，与 `crawler.py` 的时间窗口保持一致。
+
+reportgen.py：内嵌CSS单一HTML文件，7区块（报告头→竞品识别→词云→类型分布→Top10→insights→产品分析→文案），丰富配色，tag自适应不截断。`extra.json` 缺省时对应区块自动跳过。若某平台 Top10/Top5 表格中包含 `--days` 天外的历史内容（ crawler.py 时间过滤触发降级保留全部数据），表格上方会自动显示橙色数据提示。
 
 #### 5.3 清理中间文件
 
